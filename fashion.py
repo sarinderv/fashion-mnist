@@ -44,13 +44,13 @@ if (0):
 
 # build a better model
 model = keras.Sequential([
-    keras.layers.Conv2D(32, (2,2), padding='same', activation=tf.nn.relu, kernel_initializer='random_uniform', input_shape=(28, 28, 1)),
+    keras.layers.Conv2D(32, (2,2), padding='same', activation=tf.nn.relu, input_shape=(28, 28, 1)),
     keras.layers.MaxPool2D(padding='same'),
-    keras.layers.Conv2D(32, (2,2), padding='same', kernel_initializer='random_uniform', input_shape=(1, 28, 28)),
+    keras.layers.Conv2D(32, (2,2), padding='same', input_shape=(28, 28, 1)),
     keras.layers.MaxPool2D(padding='same'),
     keras.layers.Flatten(),
-    keras.layers.Dense(128, activation=tf.nn.relu, kernel_initializer='random_uniform'),
-    keras.layers.Dense(10, activation='softmax')
+    keras.layers.Dense(128, activation=tf.nn.relu),
+    keras.layers.Dense(10, activation=tf.nn.softmax)
 ])
 model.compile(optimizer=tf.train.AdamOptimizer(),
               loss='sparse_categorical_crossentropy',
