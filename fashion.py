@@ -37,18 +37,15 @@ train_images = train_images / 255.0
 test_images = test_images / 255.0
 
 # Obtain Image Parameters
-# img_rows, img_cols = train_images.shape[1:3]
+img_rows, img_cols = train_images.shape[1:3]
 nchannels = 1 # greyscale
-# nb_classes = 10 #train_labels.shape[1]
-# # convert to one-hot
-# train_labels = keras.utils.to_categorical(train_labels, nb_classes)
-# test_labels = keras.utils.to_categorical(test_labels, nb_classes)
+nb_classes = 10 #train_labels.shape[1]
 
-# print('Images rows: {} columns: {}'.format(img_rows, img_cols))
-# print('Train images shape:', train_images.shape)
-# print('Train labels shape:', train_labels.shape)
-# print('Test images shape:', test_images.shape)
-# print('Test labels shape:', test_labels.shape)
+print('Images rows: {} columns: {}'.format(img_rows, img_cols))
+print('Train images shape:', train_images.shape)
+print('Train labels shape:', train_labels.shape)
+print('Test images shape:', test_images.shape)
+print('Test labels shape:', test_labels.shape)
 
 # build a simple model
 if (0):
@@ -100,7 +97,7 @@ test_loss, test_acc = model.evaluate(test_images, test_labels)
 print('Test accuracy:', test_acc)
 
 # Initialize the Fast Gradient Sign Method (FGSM) attack object and graph
-bim = BasicIterativeMethod(KerasModelWrapper(model))
+bim = BasicIterativeMethod(KerasModelWrapper(model), sess=tf.Session())
 bim_params = {'eps': 0.3,
               'eps_iter': 0.05,
               'nb_iter': 5,
@@ -109,10 +106,8 @@ bim_params = {'eps': 0.3,
 
 # Visualize adversarial images from a trained network
 def adv_viz(attack, attack_params):
-  print(np.where(np.argmax(test_labels, axis=1) == 0))
-
   # Generate adversarial images ...
-  idxs = [np.where(np.argmax(test_labels, axis=1) == i)[0][0]
+  idxs = [np.where(test_labels == i)[0][0]
                 for i in range(nb_classes)]
   adv_inputs = test_images[idxs]
   adv_images = attack.generate_np(adv_inputs, **attack_params)
