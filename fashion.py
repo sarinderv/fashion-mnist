@@ -105,7 +105,7 @@ wrap = KerasModelWrapper(model)
 bim = BasicIterativeMethod(wrap, sess=sess)
 bim_params = {'eps': 0.3,
               'eps_iter': 0.05,
-              'nb_iter': 5,
+              'nb_iter': 10,
               'clip_min': 0.,
               'clip_max': 1.}
 
@@ -133,8 +133,15 @@ def adv_viz(attack, attack_params):
   # Finally, block & display a grid of all the adversarial examples
   #import matplotlib.pyplot as plt
   from cleverhans.plot.pyplot_image import grid_visual
-  return grid_visual(grid_viz_data)
+  fig = grid_visual(grid_viz_data)
+  fig.savefig('grid_viz.png')
+  return adv_images
 
 # Display a grid of some adversarial examples
-adv_viz(bim, bim_params)
+adv_images = adv_viz(bim, bim_params)
 
+preds = model.predict(adv_images)
+print('Predictions:', preds)
+
+test_loss, test_acc = model.evaluate(adv_images, list(range(nb_classes)))
+print('Test accuracy:', test_acc)
