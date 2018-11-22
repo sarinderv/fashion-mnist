@@ -5,7 +5,8 @@
 
 # TensorFlow and tf.keras
 import tensorflow as tf
-from tensorflow import keras
+#from tensorflow import keras
+import keras
 
 # Helper libraries
 import numpy as np
@@ -64,6 +65,10 @@ if (0):
     test_loss, test_acc = model.evaluate(test_images, test_labels)
     print('Test accuracy:', test_acc)
 
+# Create TF session and set as Keras backend session
+sess = tf.Session()
+keras.backend.set_session(sess)
+
 # reshape input from (28,28) to (28,28,1) - first layer Conv2D wants 4D tensor as input
 train_images = train_images.reshape(train_images.shape[0], 28, 28, nchannels)
 test_images = test_images.reshape(test_images.shape[0], 28, 28, nchannels)
@@ -96,8 +101,8 @@ model.summary()
 test_loss, test_acc = model.evaluate(test_images, test_labels)
 print('Test accuracy:', test_acc)
 
-# Initialize the Fast Gradient Sign Method (FGSM) attack object and graph
-bim = BasicIterativeMethod(KerasModelWrapper(model), sess=tf.Session())
+wrap = KerasModelWrapper(model)
+bim = BasicIterativeMethod(wrap, sess=sess)
 bim_params = {'eps': 0.3,
               'eps_iter': 0.05,
               'nb_iter': 5,
