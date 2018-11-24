@@ -92,8 +92,8 @@ print('Test accuracy:', test_acc)
 # - Step 4 - Implement untargeted attack using the Basic Iterative Method
 wrap = KerasModelWrapper(model)
 bim = BasicIterativeMethod(wrap, sess=sess)
-bim_params = {'eps': 0.2,
-              'eps_iter': 0.05,
+bim_params = {'eps': 0.1,
+              'eps_iter': 0.01,
               'clip_min': 0.,
               'clip_max': 1.}
 
@@ -128,22 +128,24 @@ print('Adv accuracy (5): {}, Adv accuracy (10): {}, Original accuracy: {}'.forma
 
 
 # - Step 6 - Use your model trained in Step 3 to classify the adversarial examples.
-adv_preds10 = model.predict(adv_images5)
+adv_preds10 = model.predict(adv_images10)
 adv_preds5 = model.predict(adv_images5)
 orig_preds = model.predict(orig_images)
 
 # Plot the 10 test images from each category, the true label, and their predicted labels.
 # Color correct predictions in blue, incorrect predictions in red
-fig = plt.figure(figsize=(5, 100))
+fig = plt.figure(figsize=(5, 60))
 for i, img in enumerate(orig_images):
-    fig.add_subplot(100, 3, i * 3 + 1)
+    p = fig.add_subplot(100, 3, i * 3 + 1)
+    p.yaxis.set_label_coords(-.5, -.05)
     plt.grid(False)
     plt.xticks([])
     plt.yticks([])
     plt.imshow(np.squeeze(img, axis=2), cmap=plt.cm.binary)
-    plt.ylabel("{}".format(class_names[int(orig_labels[i])]), rotation=0)
+    plt.ylabel("{}".format(int(orig_labels[i])), rotation=0)
 for i, img in enumerate(adv_images5):
-    fig.add_subplot(100, 3, i * 3 + 2)
+    p = fig.add_subplot(100, 3, i * 3 + 2)
+    p.yaxis.set_label_coords(-.5, -.05)
     plt.grid(False)
     plt.xticks([])
     plt.yticks([])
@@ -154,13 +156,10 @@ for i, img in enumerate(adv_images5):
     else:
         color = 'red'
     confidence = np.max(adv_preds5[i])
-    if confidence < .99:
-        plt.ylabel("{} {:.2f}".format(class_names[adv_pred_label],
-                                      confidence), color=color, rotation=0)
-    else:
-        plt.ylabel("{}".format(class_names[adv_pred_label]), color=color, rotation=0)
+    plt.ylabel("{}".format(adv_pred_label), color=color, rotation=0)
 for i, img in enumerate(adv_images10):
-    fig.add_subplot(100, 3, i * 3 + 3)
+    p = fig.add_subplot(100, 3, i * 3 + 3)
+    p.yaxis.set_label_coords(-.5, -.05)
     plt.grid(False)
     plt.xticks([])
     plt.yticks([])
@@ -171,10 +170,6 @@ for i, img in enumerate(adv_images10):
     else:
         color = 'red'
     confidence = np.max(adv_preds10[i])
-    if confidence < .99:
-        plt.ylabel("{} {:.2f}".format(class_names[adv_pred_label],
-                                      confidence), color=color, rotation=0)
-    else:
-        plt.ylabel("{}".format(class_names[adv_pred_label]), color=color, rotation=0)
+    plt.ylabel("{}".format(adv_pred_label), color=color, rotation=0)
 
-plt.savefig('output.png')
+plt.savefig('output.pdf')
