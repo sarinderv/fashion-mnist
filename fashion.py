@@ -33,7 +33,6 @@ test_images = test_images / 255.0
 img_rows, img_cols = train_images.shape[1:3]
 nchannels = 1  # greyscale
 nb_classes = 10
-nb_iter = 10
 
 print('Images rows: {} columns: {}'.format(img_rows, img_cols))
 
@@ -95,7 +94,6 @@ wrap = KerasModelWrapper(model)
 bim = BasicIterativeMethod(wrap, sess=sess)
 bim_params = {'eps': 0.2,
               'eps_iter': 0.05,
-              'nb_iter': nb_iter,
               'clip_min': 0.,
               'clip_max': 1.}
 
@@ -109,42 +107,74 @@ for clz in range(nb_classes):
     orig_images = np.append(orig_images, test_images2[idxs], axis=0)
     orig_labels = np.append(orig_labels, test_labels[idxs], axis=0)
 
-adv_images = bim.generate_np(orig_images, **bim_params)
+bim_params["nb_iter"] = 5
+adv_images5 = bim.generate_np(orig_images, **bim_params)
+bim_params["nb_iter"] = 10
+adv_images10 = bim.generate_np(orig_images, **bim_params)
 
 # Compute the average distortion introduced by the algorithm
-percent_perturbed = np.mean(np.sum((adv_images - orig_images) ** 2,
+percent_perturbed = np.mean(np.sum((adv_images5 - orig_images) ** 2,
                                    axis=(1, 2, 3)) ** .5)
-print('Avg. L_2 norm of perturbations {0:.4f}'.format(percent_perturbed))
+print('Avg. L_2 norm of perturbations (5 iterations) {0:.4f}'.format(percent_perturbed))
+percent_perturbed = np.mean(np.sum((adv_images10 - orig_images) ** 2,
+                                   axis=(1, 2, 3)) ** .5)
+print('Avg. L_2 norm of perturbations (10 iterations) {0:.4f}'.format(percent_perturbed))
 
 # Evaluate accuracy on adversarial images
-adv_loss, adv_acc = model.evaluate(adv_images, orig_labels)
+adv_loss, adv_acc5 = model.evaluate(adv_images5, orig_labels)
+adv_loss, adv_acc10 = model.evaluate(adv_images10, orig_labels)
 orig_loss, orig_acc = model.evaluate(orig_images, orig_labels)
-print('Adv accuracy: {}, Original accuracy: {}'.format(adv_acc, orig_acc))
+print('Adv accuracy (5): {}, Adv accuracy (10): {}, Original accuracy: {}'.format(adv_acc5, adv_acc10, orig_acc))
 
 
 # - Step 6 - Use your model trained in Step 3 to classify the adversarial examples.
-adv_preds = model.predict(adv_images)
+adv_preds10 = model.predict(adv_images5)
+adv_preds5 = model.predict(adv_images5)
 orig_preds = model.predict(orig_images)
 
 # Plot the 10 test images from each category, the true label, and their predicted labels.
 # Color correct predictions in blue, incorrect predictions in red
 fig = plt.figure(figsize=(5, 100))
-plt.grid(False)
-plt.xticks([])
-plt.yticks([])
 for i, img in enumerate(orig_images):
-    fig.add_subplot(100, 2, i * 2 + 1)
+    fig.add_subplot(100, 3, i * 3 + 1)
+    plt.grid(False)
+    plt.xticks([])
+    plt.yticks([])
     plt.imshow(np.squeeze(img, axis=2), cmap=plt.cm.binary)
     plt.ylabel("{}".format(class_names[int(orig_labels[i])]), rotation=0)
-for i, img in enumerate(adv_images):
-    fig.add_subplot(100, 2, i * 2 + 2)
+for i, img in enumerate(adv_images5):
+    fig.add_subplot(100, 3, i * 3 + 2)
+    plt.grid(False)
+    plt.xticks([])
+    plt.yticks([])
     plt.imshow(np.squeeze(img, axis=2), cmap=plt.cm.binary)
-    adv_pred_label = np.argmax(adv_preds[i])
+    adv_pred_label = np.argmax(adv_preds5[i])
     if adv_pred_label == orig_labels[i]:
         color = 'blue'
     else:
         color = 'red'
-    plt.ylabel("{} {:2.0f}%".format(class_names[adv_pred_label],
-                                    100 * np.max(adv_preds[i])), color=color, rotation=0)
+    confidence = np.max(adv_preds5[i])
+    if confidence < .99:
+        plt.ylabel("{} {:.2f}".format(class_names[adv_pred_label],
+                                      confidence), color=color, rotation=0)
+    else:
+        plt.ylabel("{}".format(class_names[adv_pred_label]), color=color, rotation=0)
+for i, img in enumerate(adv_images10):
+    fig.add_subplot(100, 3, i * 3 + 3)
+    plt.grid(False)
+    plt.xticks([])
+    plt.yticks([])
+    plt.imshow(np.squeeze(img, axis=2), cmap=plt.cm.binary)
+    adv_pred_label = np.argmax(adv_preds10[i])
+    if adv_pred_label == orig_labels[i]:
+        color = 'blue'
+    else:
+        color = 'red'
+    confidence = np.max(adv_preds10[i])
+    if confidence < .99:
+        plt.ylabel("{} {:.2f}".format(class_names[adv_pred_label],
+                                      confidence), color=color, rotation=0)
+    else:
+        plt.ylabel("{}".format(class_names[adv_pred_label]), color=color, rotation=0)
 
-plt.savefig('{}-iterations.png'.format(nb_iter))
+plt.savefig('output.png')
